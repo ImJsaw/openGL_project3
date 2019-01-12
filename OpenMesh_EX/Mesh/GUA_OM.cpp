@@ -641,7 +641,7 @@ void Tri_Mesh::findNearestPoint(Tri_Mesh mesh, std::vector<double> mouse, int fa
 	VHandle min;
 
 	int isFaceMatch = 0;
-	for (f_it = faces_begin(); f_it != faces_end() && !isFaceMatch; ++f_it) {
+	for (f_it = faces_begin(); f_it != faces_end() && !isFaceMatch ; ++f_it) {
 
 		//printf("out for\n");
 
@@ -656,6 +656,7 @@ void Tri_Mesh::findNearestPoint(Tri_Mesh mesh, std::vector<double> mouse, int fa
 			double current = std::sqrtl(std::pow((point(fv_it.handle())[0] - mouse[0]), 2) + std::pow((point(fv_it.handle())[1] - mouse[1]), 2) + std::pow((point(fv_it.handle())[2] - mouse[2]), 2));
 
 			printf(" temp %f  v.s. current %f\n", temp, current);
+			std::cout << "cur iter point : " << point(fv_it.handle())[0] << "," << point(fv_it.handle())[1] << "," << point(fv_it.handle())[2] << std::endl;
 
 			if (temp > current) min = fv_it.handle();
 
@@ -674,7 +675,38 @@ void Tri_Mesh::findNearestPoint(Tri_Mesh mesh, std::vector<double> mouse, int fa
 	if (isFaceMatch) printf("selected point is : %f %f %f\n", vertex[0], vertex[1], vertex[2]);
 
 }
-
+//new func
+void Tri_Mesh::findNearestVert(Tri_Mesh mesh, std::vector<double> mouse, int face, std::vector<double> &vertex, mat4 MVP,double dis) {
+	FIter f_it;
+	FVIter fv_it;
+	VHandle min;
+	int isFaceMatch = 0;
+	for (f_it = faces_begin(); f_it != faces_end() && !isFaceMatch; ++f_it) {
+		//find chosen face
+		if (f_it.handle().idx() != face) continue;	
+		else min = fv_iter(f_it).handle();
+		// compare three vert
+		for (fv_it = ++fv_iter(f_it); fv_it; ++fv_it) { 
+			//put point into vec to mult MVP
+			vec3 tempPoint , curPoint;
+			for (int i = 0; i < 3; i++) {
+				tempPoint[i] = point(min)[i];
+				curPoint[i] = point(fv_it.handle())[i];
+			}
+			//fix range issue 
+			vec4 tempPosOnScreen = MVP * vec4(tempPoint, 1) / pow(dis, 1.35) / 0.7;
+			vec4 curPosOnScreen = MVP * vec4(curPoint,1) / pow(dis, 1.35) / 0.7;
+			//compare mouse dis via iterator
+			double temp = pow((tempPosOnScreen[0] - mouse[0]), 2) + pow((tempPosOnScreen[1] - mouse[1]), 2);
+			double current = pow((curPosOnScreen[0] - mouse[0]), 2) + pow((curPosOnScreen[1] - mouse[1]), 2);
+			if (temp > current) min = fv_it.handle();
+			//cout << "cur iter point scr position: " << curPosOnScreen[0] << "," << curPosOnScreen[1] << std::endl;
+			isFaceMatch = 1;
+		}
+	}
+	for (int i = 0; i < 3 && isFaceMatch; i++) vertex.push_back(point(min)[i]);
+	//if (isFaceMatch) printf("selected point is : %f %f %f\n", vertex[0], vertex[1], vertex[2]);
+}
 
 void Tri_Mesh::getUV(std::vector<double> & patchuv, Tri_Mesh patch, float uvRotateAngle) {
 	VVIter vv_it;

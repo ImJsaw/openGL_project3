@@ -57,7 +57,6 @@ std::vector<double> verticesPatch; // patch的點，給vbo用
 std::vector<double> patchUV; // patch的uv座標，給vbo用
 std::vector<double> selectedVertices;
 
-GLCamera camera;
 unsigned int checkerBoardImg; // 貼圖
 double rotateAngle = 0.0f;
 
@@ -78,7 +77,6 @@ mat4 ViewMatrixUV;
 GLuint VBO;
 GLuint meshVBO;
 GLuint VAO;
-GLuint UBO;
 GLuint VBOuv;
 GLuint VAOuv;
 int face;
@@ -137,16 +135,29 @@ TextureData Load_png(const char* path, bool mirroredY = true)
 	}
 	return texture;
 }
+
 bool read_mouse(int x, int y, point &p, mat4 mv, mat4 proj) {
+
 	GLdouble M[16], P[16]; GLint V[4];
 
 	//glGetDoublev(GL_MODELVIEW_MATRIX, M);
 	//glGetDoublev(GL_PROJECTION_MATRIX, P);
 	glGetIntegerv(GL_VIEWPORT, V);
 
+	/*
+	ViewMatrix = lookAt(
+		glm::vec3(eyedistance*cos(horizonAngle)*cos(verticleAngle), eyedistance*sin(verticleAngle), eyedistance*sin(horizonAngle)*cos(verticleAngle)),
+		glm::vec3(0, 0, 0), // and looks at the origin
+		glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
+	);
+	*/
+	
+
+	mat4 Model = translate(translateX, translateY, 0.0f);
+
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			M[i] = mv[i][j];
+			M[i] = Model[i][j];
 		}
 	}
 
@@ -199,6 +210,7 @@ bool read_mouse(int x, int y, point &p, mat4 mv, mat4 proj) {
 	}
 	return false;
 }
+
 namespace OpenMesh_EX {
 
 	using namespace System;
@@ -222,7 +234,7 @@ namespace OpenMesh_EX {
 				pixel.b = 0.0f;
 				pixel.a = 0.0f;
 				for (int i = 0; i < FACE_SIZE; i++) facesid[i] = -1;
-				Projection = glm::perspective(80.0f, 4.0f / 3.0f, 0.001f, 100.0f);
+				Projection = glm::perspective(100.0f, 4.0f / 3.0f, 0.001f, 100.0f);
 			}
 
 		protected:
@@ -541,6 +553,9 @@ namespace OpenMesh_EX {
 				 //display
 		private: System::Void hkoglPanelControl1_Paint(System::Object^  sender, System::Windows::Forms::PaintEventArgs^  e) {
 			//std::cout << "refresh" << std::endl;
+			SCR_WIDTH = this->hkoglPanelControl1->Size.Width;
+			SCR_HEIGHT = this->hkoglPanelControl1->Size.Height;
+
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
 			glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 			glClearDepth(1.0);
@@ -574,7 +589,7 @@ namespace OpenMesh_EX {
 
 			mat4 Model = translate(translateX, translateY, 0.0f);
 
-			MVP = Model * Projection * ViewMatrix;
+			MVP = Model * Projection * ViewMatrix;//translate via screen viewport, so model last
 			//MVP = Projection * ViewMatrix * Model;
 
 			glUniformMatrix4fv(mvpID, 1, GL_FALSE, &MVP[0][0]);
@@ -631,8 +646,8 @@ namespace OpenMesh_EX {
 					//mesh->Render_SolidWireframe();
 					glGenBuffers(1, &VBO);
 					glBindBuffer(GL_ARRAY_BUFFER, VBO);
-					std::cout << verticesPatch[0] << std::endl;
-					std::cout << verticesPatch.size() << std::endl;
+					//std::cout << verticesPatch[0] << std::endl;
+					//std::cout << verticesPatch.size() << std::endl;
 					glBufferData(GL_ARRAY_BUFFER, verticesPatch.size() * sizeof(double), &verticesPatch[0], GL_STATIC_DRAW);
 
 					glGenBuffers(1, &meshVBO);
@@ -641,7 +656,8 @@ namespace OpenMesh_EX {
 
 					//glBufferData(GL_ARRAY_BUFFER, verticesPatch.size() * sizeof(double) + patchUV.size() * sizeof(double), &verticesPatch[0], GL_STATIC_DRAW);
 					//glBufferSubData(GL_ARRAY_BUFFER, verticesPatch.size() * sizeof(double), patchUV.size() * sizeof(double), &patchUV[0]);
-					printf("change the VBO to patch...\n");
+					
+					//printf("change the VBO to patch...\n");
 
 					//debug1，把VAO重訂的部分拉上來
 					glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -677,7 +693,7 @@ namespace OpenMesh_EX {
 				glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 				if (facesid2.size() != 0) {
-					printf("draw red patch...\n");
+					//printf("draw red patch...\n");
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 					glm::vec3 color = glm::vec3(1.0, 0.0, 0.5);
 					glUniform3fv(ColorID, 1, &color[0]);
@@ -693,11 +709,11 @@ namespace OpenMesh_EX {
 				}
 
 				if (selectedVertices.size() != 0) {
-					printf("tuck data into point shader...\n");
+					//printf("tuck data into point shader...\n");
 					glGenBuffers(1, &VBO);
 					glBindBuffer(GL_ARRAY_BUFFER, VBO);
-					std::cout << verticesPatch[0] << std::endl;
-					std::cout << verticesPatch.size() << std::endl;
+					//std::cout << verticesPatch[0] << std::endl;
+					//std::cout << verticesPatch.size() << std::endl;
 					glBufferData(GL_ARRAY_BUFFER, selectedVertices.size() * sizeof(double), &selectedVertices[0], GL_STATIC_DRAW);
 					glEnableVertexAttribArray(0);
 					glVertexAttribPointer(0,				//location
@@ -706,17 +722,14 @@ namespace OpenMesh_EX {
 						GL_FALSE,			//not normalized
 						0,				//strip
 						0);//buffer offset
-				}
-
-				if (selectedVertices.size() != 0) {
+					glDisable(GL_DEPTH_TEST);
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 					glm::vec3 color = glm::vec3(1.0, 0.0, 1.0);
 					glUniform3fv(ColorID, 1, &color[0]);
-					glPointSize(10000.0);
+					glPointSize(10.0);
 					glDrawArrays(GL_POINTS, 0, 1);
 				}
 			}
-
 			else { // 整塊拿去解
 				if (patchUV.size() != 0) {
 					glGenBuffers(1, &VBO);
@@ -729,12 +742,6 @@ namespace OpenMesh_EX {
 					glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
 					glBufferData(GL_ARRAY_BUFFER, patchUV.size() * sizeof(double), &patchUV[0], GL_STATIC_DRAW);
 
-					//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(double) + patchUV.size() * sizeof(double), &vertices[0], GL_STATIC_DRAW);
-
-
-					//glBufferSubData(GL_ARRAY_BUFFER, vertices.size() * sizeof(double), patchUV.size() * sizeof(double), &patchUV[0]);
-					printf("change the VBO to patch...\n");
-
 					//debug1，把VAO重訂的部分拉上來
 					glBindBuffer(GL_ARRAY_BUFFER, VBO);
 					glEnableVertexAttribArray(0);
@@ -744,28 +751,16 @@ namespace OpenMesh_EX {
 						GL_FALSE,			//not normalized
 						0,				//strip
 						0);//buffer offset
-					/*glEnableVertexAttribArray(1);
-					glVertexAttribPointer(1,				//location
-						2,				//vec3
-						GL_DOUBLE,			//type
-						GL_FALSE,			//not normalized
-						0,				//strip
-						(void *)(vertices.size() * sizeof(double)));//buffer offset*/
 					glBindBuffer(GL_ARRAY_BUFFER, meshVBO); // this attribute comes from a different vertex buffer
 					glVertexAttribPointer(1, 2, GL_DOUBLE, GL_FALSE, 0, 0); // 從instanceVBO傳入的
 					glEnableVertexAttribArray(1);
 					glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-					//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
 					glEnable(GL_DEPTH_TEST);
 					glDepthFunc(GL_LEQUAL);
-					//glBindVertexArray(VAO);
 					glUseProgram(program);//uniform參數數值前必須先use shader
 					glUniformMatrix4fv(mvpID, 1, GL_FALSE, &MVP[0][0]);
 					glBindBuffer(GL_ARRAY_BUFFER, VBO);
-					//glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
 
 					printf("draw whole patch...\n");
 					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -774,14 +769,7 @@ namespace OpenMesh_EX {
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(GL_TEXTURE_2D, checkerBoardImg);
 					glDrawArrays(GL_TRIANGLES, 0, face * 3);
-					//glDrawArrays(GL_TRIANGLES, 0, facePatch * 3);
-					//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-					//color = glm::vec3(0.0, 0.0, 0.0);
-					//glUniform3fv(ColorID, 1, &color[0]);
-					//glDrawArrays(GL_TRIANGLES, 0, face * 3);
 				}
-
-
 			}
 		}
 
@@ -792,15 +780,13 @@ namespace OpenMesh_EX {
 				//record mouse position for drag event
 				prevMouseX = e->X;
 				prevMouseY = e->Y;
-
-				point depth;
-				read_mouse(e->X, SCR_HEIGHT - e->Y, depth, ViewMatrix, Projection);
-				std::cout << "mouse point : " << depth << std::endl;
+				//cout << "click : " << e->X << "," << e->Y << endl;
 				std::vector<double> mousePosition;
-				mousePosition.push_back(depth[0]);
-				mousePosition.push_back(depth[1]);
-				mousePosition.push_back(depth[2]);
-
+				double mouseOnScreenX = (double)e->X * 2 / (double)SCR_WIDTH - 1;
+				double mouseOnScreenY = (double)(SCR_HEIGHT - e->Y) * 2 / (double)SCR_HEIGHT - 1;
+				mousePosition.push_back(mouseOnScreenX);
+				mousePosition.push_back(mouseOnScreenY);
+				//cout << "click SCR : " << mouseOnScreenX << "," << mouseOnScreenY << endl;
 				//read face
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
 				glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -808,8 +794,7 @@ namespace OpenMesh_EX {
 				cout << "face id : " << pixel.r << endl;
 
 				selectedVertices.clear();
-				mesh->findNearestPoint(*mesh, mousePosition, pixel.r - 1, selectedVertices);
-
+				mesh->findNearestVert(*mesh, mousePosition, pixel.r - 1, selectedVertices, MVP , eyedistance);
 
 				//printf("mouse x = %d mouse y = %d\n", e->X, hkoglPanelControl1->Height - e->Y);
 				if (isLoad) {
@@ -892,7 +877,7 @@ namespace OpenMesh_EX {
 			if (e->Delta < 0) eyedistance += 0.1;
 			else{
 				eyedistance -= 0.1;
-				//if (eyedistance < 0.4) eyedistance = 0.4;
+				if (eyedistance < 0.4) eyedistance = 0.4;
 				//std::cout << "wheel up, distance : "  << eyedistance << std::endl;
 			}
 			hkoglPanelControl1->Invalidate();

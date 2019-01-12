@@ -13,10 +13,14 @@
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "glm/ext.hpp"
 using namespace glm;
+using namespace std;
+
 
 #include <Eigen/Sparse>
 using namespace Eigen;
+
 
 
 struct Face_InnerAngle
@@ -232,6 +236,7 @@ public:
 	void loadToBuffer(Tri_Mesh _mesh, std::vector<double> & out_vertices, int & face, std::vector<double> & uv);
 	void loadToBufferPatch(std::vector<double> & out_vertices, int & face, std::vector<int> selected, Tri_Mesh & patch);
 	void findNearestPoint(Tri_Mesh mesh, std::vector<double> mouse, int face, std::vector<double> &vertex);
+	void findNearestVert(Tri_Mesh mesh, std::vector<double> mouse, int face, std::vector<double> &vertex , mat4 MVP , double dis);
 
 	//-------Edit Flag-------//
     bool                                       Delete_Flag;
