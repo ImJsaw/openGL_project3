@@ -541,7 +541,7 @@ void Tri_Mesh::loadToBuffer(Tri_Mesh _mesh, std::vector<double> & out_vertices, 
 	FIter f_it;
 	FVIter	fv_it;
 
-	face = 0;
+	//face = 0;
 
 	std::cout << "mesh support : " << std::endl;
 	std::cout << "  " << "texcoords" << ": " << ((_mesh.has_vertex_texcoords1D()) ? "yes\n" : "no\n") << std::endl;
