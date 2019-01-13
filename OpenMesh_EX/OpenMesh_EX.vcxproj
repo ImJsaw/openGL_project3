@@ -108,6 +108,8 @@
   <ItemGroup>
     <None Include="framebuffer.fp" />
     <None Include="framebuffer.vp" />
+    <None Include="img.fp" />
+    <None Include="img.vp" />
     <None Include="meshShader.fp" />
     <None Include="meshShader.vp" />
     <None Include="uv.fp" />

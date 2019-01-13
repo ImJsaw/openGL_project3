@@ -8,7 +8,7 @@ void main()
 { 
     
 	//gl_Position = MVP * vec4(vPosition.x, vPosition.y, 0.0, 1.0);
-	//gl_Position = vec4(vPosition.x * 2 - 1, vPosition.y * 2 - 1, 0.0, 1.0);
+	gl_Position = vec4(vPosition.x * 2 - 1, vPosition.y * 2 - 1, 0.0, 1.0);
 	//gl_Position = vec4(vPosition.x / 10.0, vPosition.y / 10.0, 0.0, 1.0);
-	gl_Position = vec4(vPosition.x  - 0.5, vPosition.y * 0.8 - 0.4, 0.0, 1.0);
+	//gl_Position = vec4(vPosition.x  - 0.5, vPosition.y * 0.8 - 0.4, 0.0, 1.0);
 }

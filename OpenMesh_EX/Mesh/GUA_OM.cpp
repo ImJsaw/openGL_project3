@@ -719,16 +719,9 @@ void Tri_Mesh::getUV(std::vector<double> & patchuv, Tri_Mesh patch, float uvRota
 	//Step1 : 先找到第一個邊界
 	for (e_it = edges_begin(); e_it != edges_end(); e_it++) {
 		printf("enter edge iterator...\n");
-
 		bool isBoundary = patch.is_boundary(*e_it);
-
 		if (isBoundary) {
-			//patch.point(v_it.handle())[0];
 			heh = patch.halfedge_handle(e_it.handle(), 1);
-			/*Point v1 = patch.point(from_vertex_handle(h));
-			Point v2 = patch.point(to_vertex_handle(h));
-			printf("v1 = %d, %f, %f\n",v1[0], v1[1], v1[2]);
-			printf("v2 = %f, %f, %f\n", v2.data(), v2.data() + 1, v2.data() + 2);*/
 			break;
 		}
 	}
